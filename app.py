@@ -30,12 +30,15 @@ st.caption(
 )
 
 city = st.selectbox("City", list(CITIES))
+
 selected_date = st.date_input(
     "Date",
     value=date.today() + timedelta(days=1),
     min_value=date.today(),
-    max_value=date.today() + timedelta(days=15),   # Allow dates up to 15 days ahead
+    max_value=date.today() + timedelta(days=14),
+    help="Select a date within the next 14 days. Weather forecasts are limited to this period.",
 )
+
 
 if st.button("Predict sales", type="primary"):
     # 1. Ask the weather API for the forecast
@@ -64,11 +67,16 @@ if st.button("Predict sales", type="primary"):
         )
         st.stop()
 
-    temperature = response.json()["daily"]["temperature_2m_max"][0]
 
-
-    rain_chance = response.json()["daily"]["precipitation_probability_max"][0]
-
+    try:
+        daily = response.json()["daily"]
+        temperature = daily["temperature_2m_max"][0]
+        rain_chance = daily["precipitation_probability_max"][0]
+    except (ValueError, KeyError, IndexError, TypeError):
+        st.error(
+            "Forecast data is unavailable. Please select another date or city."
+        )
+        st.stop()
 
     if temperature is None or rain_chance is None:
         st.error(
@@ -76,6 +84,7 @@ if st.button("Predict sales", type="primary"):
             "Please select another date or city."
         )
         st.stop()
+
 
 
     is_weekend = int(selected_date.weekday() >= 5)
@@ -92,10 +101,10 @@ if st.button("Predict sales", type="primary"):
     # 3. Show the result
     col1, col2, col3, col4 = st.columns(4)
 
-    col1.metric("Temperature", f"{temperature:.0f} °F")
+    col1.metric("Forecast high", f"{temperature:.0f} °F")
     col2.metric("Rain chance", f"{rain_chance:.0f}%")
     col3.metric("Day type", "Weekend" if is_weekend else "Weekday")
-    col4.metric("Predicted sales", f"{prediction:.0f} cones")
+    col4.metric("Predicted sales (per day)", f"{prediction:.0f} cones")
 
 
     st.caption(
