@@ -87,7 +87,7 @@ if st.button("Predict sales", type="primary"):
         "is_weekend": [is_weekend]
     })
 
-    prediction = max(0, model.predict(features)[0])
+    prediction = round(max(0, model.predict(features)[0]))
 
     # 3. Show the result
     col1, col2, col3, col4 = st.columns(4)
